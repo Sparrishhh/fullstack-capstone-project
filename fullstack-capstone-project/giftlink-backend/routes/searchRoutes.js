@@ -1,46 +1,39 @@
-const express = require('express');
-const router = express.Router();
-const { connectToDatabase } = require('../path/to/dbConnection'); // Adjust the path as needed
+    const express = require('express');
+    const router = express.Router();
+    const connectToDatabase = require('../models/db');
 
-// GET /api/gifts - Search and filter gifts
-router.get('/', async (req, res) => {
-  try {
-    // ✅ Task 1: Connect to MongoDB
-    const db = await connectToDatabase();
-    const collection = db.collection('gifts');
+    // Search for gifts
+    router.get('/', async (req, res, next) => {
+        try {
 
-    // Extract query parameters
-    const { name, category, condition, age } = req.query;
+            // Task 1: Connect to MongoDB
+            const db = await connectToDatabase();
+            const collection = db.collection("gifts");
+            // Initialize the query object
+            let query = {};
 
-    // Initialize the query object
-    const query = {};
+            // Task 2: check if the name exists and is not empty
+            if (req.query.name && req.query.name.trim() !== '') {
+                query.name = { $regex: req.query.name, $options: "i" }; // Using regex for partial match, case-insensitive
+            }
 
-    // ✅ Task 2: Check if the name exists and is not empty
-    if (name && name.trim() !== '') {
-      query.name = { $regex: new RegExp(name, 'i') }; // Case-insensitive partial match
-    }
+            // Task 3: Add other filters to the query
+            if (req.query.category) {
+                query.category = req.query.category;
+            }
+            if (req.query.condition) {
+                query.condition = req.query.condition;
+            }
+            if (req.query.age_years) {
+                query.age_years = { $lte: parseInt(req.query.age_years) };
+            }
 
-    // ✅ Task 3: Add other filters
-    if (category && category.trim() !== '') {
-      query.category = category;
-    }
+            // Task 4: Fetch filtered gifts
+            const gifts = await collection.find(query).toArray();
+            res.json(gifts);
+        } catch (e) {
+            next(e);
+        }
+    });
 
-    if (condition && condition.trim() !== '') {
-      query.condition = condition;
-    }
-
-    if (age && age.trim() !== '') {
-      query.age = age;
-    }
-
-    // Find matching documents
-    const gifts = await collection.find(query).toArray();
-
-    res.status(200).json(gifts);
-  } catch (error) {
-    console.error('Error searching gifts:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-module.exports = router;
+    module.exports = router;
