@@ -46,15 +46,4 @@ router.post('/', async (req, res, next) => {
   try {
     const db = await connectToDatabase();
     const collection = db.collection('gifts');
-    const result = await collection.insertOne(req.body);
-
-    // For MongoDB v4+, result.ops is deprecated, use result.insertedId
-    const newGift = await collection.findOne({ _id: result.insertedId });
-
-    res.status(201).json(newGift);
-  } catch (e) {
-    next(e);
-  }
-});
-
-module.exports = router;
+    const result = await colle
