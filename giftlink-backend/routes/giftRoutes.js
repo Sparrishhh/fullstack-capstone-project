@@ -46,4 +46,13 @@ router.post('/', async (req, res, next) => {
   try {
     const db = await connectToDatabase();
     const collection = db.collection('gifts');
-    const result = await colle
+    const result = await collection.insertOne(req.body);
+    const newGift = await collection.findOne({ _id: result.insertedId });
+
+    res.status(201).json(newGift);
+  } catch (e) {
+    next(e);
+  }
+});
+
+module.exports = router;
